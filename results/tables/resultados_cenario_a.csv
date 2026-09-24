@@ -1,0 +1,11 @@
+modelo,protocolo,MAE,RMSE,R2
+Persistência,Expanding,1.984,2.524,-0.2399
+Persistência,Rolling,1.984,2.524,-0.2399
+Regressão Linear,Expanding,1.5891,2.1761,0.0783
+Regressão Linear,Rolling,1.5988,2.1127,0.1312
+Ridge,Expanding,1.5823,2.1419,0.1071
+Ridge,Rolling,1.6214,2.1102,0.1333
+Random Forest,Expanding,1.7317,2.2991,-0.0288
+Random Forest,Rolling,1.7138,2.2549,0.0104
+Gradient Boosting,Expanding,1.8782,2.4053,-0.1261
+Gradient Boosting,Rolling,1.8422,2.3523,-0.077

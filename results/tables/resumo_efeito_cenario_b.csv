@@ -1,0 +1,11 @@
+modelo,protocolo,media_MAE,media_RMSE,media_R2,folds_MAE_melhor,folds_RMSE_melhor,folds_R2_melhor
+Gradient Boosting,Expanding,-0.1096,-0.1162,0.1021,2,2,2
+Gradient Boosting,Rolling,-0.0555,-0.0631,0.0496,1,2,2
+Persistência,Expanding,0.0,0.0,0.0,0,0,0
+Persistência,Rolling,0.0,0.0,0.0,0,0,0
+Random Forest,Expanding,0.1187,0.0235,-0.0212,0,1,1
+Random Forest,Rolling,0.1489,0.0701,-0.0638,0,1,1
+Regressão Linear,Expanding,0.0821,-0.0459,0.0218,1,2,2
+Regressão Linear,Rolling,0.1288,0.0213,-0.0246,1,2,2
+Ridge,Expanding,0.073,-0.0074,-0.0064,1,2,2
+Ridge,Rolling,0.0519,-0.0098,0.0082,1,2,2
