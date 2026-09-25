@@ -1,0 +1,3 @@
+modelo,protocolo,MAE_A,MAE_B,delta_MAE,RMSE_A,RMSE_B,delta_RMSE,R2_A,R2_B,delta_R2
+Gradient Boosting,Expanding,1.8782,1.7686,-0.1096,2.4053,2.3054,-0.0999,-0.1261,-0.0345,0.0916
+Gradient Boosting,Rolling,1.8422,1.7867,-0.0555,2.3523,2.3035,-0.0488,-0.077,-0.0327,0.0443
