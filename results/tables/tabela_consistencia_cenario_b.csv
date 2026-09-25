@@ -1,0 +1,11 @@
+modelo,protocolo,folds_mae_melhor,folds_rmse_melhor,folds_r2_melhor,total_folds,consistencia_efeito
+Persistência,Expanding,0,0,0,3,Sem melhoria nos folds
+Persistência,Rolling,0,0,0,3,Sem melhoria nos folds
+Regressão Linear,Expanding,1,2,2,3,Efeito heterogêneo entre os folds
+Regressão Linear,Rolling,1,2,2,3,Efeito heterogêneo entre os folds
+Ridge,Expanding,1,2,2,3,Efeito heterogêneo entre os folds
+Ridge,Rolling,1,2,2,3,Efeito heterogêneo entre os folds
+Random Forest,Expanding,0,1,1,3,Efeito heterogêneo entre os folds
+Random Forest,Rolling,0,1,1,3,Efeito heterogêneo entre os folds
+Gradient Boosting,Expanding,2,2,2,3,Efeito heterogêneo entre os folds
+Gradient Boosting,Rolling,1,2,2,3,Efeito heterogêneo entre os folds
