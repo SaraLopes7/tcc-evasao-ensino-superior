@@ -1,65 +1,217 @@
 # TCC — Evasão no Ensino Superior
 
-Projeto de TCC sobre **evasão nas instituições de ensino superior**, desenvolvido no formato **Tipo B — Validação de solução**.
+Projeto de Trabalho de Conclusão de Curso desenvolvido no formato **Tipo B — Validação de solução**, com foco na avaliação comparativa de abordagens preditivas para a taxa de evasão no ensino superior brasileiro.
 
-O trabalho investiga, por meio de um protocolo experimental temporal, diferentes abordagens de modelagem para previsão da taxa de evasão nas unidades federativas brasileiras e compara o efeito da ampliação do conjunto de variáveis preditoras.
-
----
-
-## 1. Objetivo do projeto
-
-O projeto busca produzir evidências sobre o desempenho de diferentes métodos de previsão da evasão no ensino superior, considerando:
-
-- comparação entre modelos lineares e não lineares;
-- validação temporal sem uso de informação futura;
-- comparação entre estratégias **Expanding Window** e **Rolling Window**;
-- análise do comportamento dos erros ao longo do tempo;
-- comparação entre um cenário com indicadores agregados e outro enriquecido com informações desagregadas da evasão;
-- análise exploratória da importância das variáveis no modelo Gradient Boosting.
-
-O desenho foi motivado, entre outros pontos, pela intenção de explorar **diversificação metodológica** em relação à predominância de técnicas tradicionais observada na literatura sobre evasão.
+O trabalho utiliza dados dos **Indicadores de Fluxo da Educação Superior do INEP** e investiga o comportamento de diferentes modelos sob protocolos de validação temporal, além de avaliar o efeito da inclusão de informações desagregadas da evasão.
 
 ---
 
-## 2. Formato de entrega
+## 1. Pergunta de pesquisa
 
-O trabalho segue o formato:
+> **Em que medida diferentes abordagens preditivas apresentam desempenhos distintos na previsão da taxa de evasão no ensino superior brasileiro quando avaliadas por protocolos temporais, e qual é o efeito da incorporação de informações desagregadas da evasão sobre esse desempenho?**
 
-> **Tipo B — Validação de solução**
+## 2. Objetivo
 
-A estrutura experimental procura estabelecer explicitamente:
+Avaliar comparativamente diferentes abordagens preditivas para a taxa de evasão no ensino superior brasileiro, considerando protocolos de validação temporal e diferentes conjuntos de variáveis preditoras.
 
-1. critério de avaliação;
-2. baseline;
-3. dados e amostra;
-4. métricas;
-5. análise de erros;
-6. implicações dos resultados.
+O experimento também examina:
 
-A revisão de literatura permanece como requisito transversal do trabalho.
+- diferenças entre **Expanding Window** e **Rolling Window**;
+- impacto da ampliação das variáveis preditoras;
+- comportamento dos erros entre períodos e unidades federativas;
+- relevância preditiva das variáveis no Gradient Boosting.
 
 ---
 
-## 3. Fonte dos dados
+## 3. Dados e unidade de análise
 
-Os dados utilizados são provenientes dos **Indicadores de Fluxo da Educação Superior disponibilizados pelo INEP**, especificamente a base por Unidade da Federação (`INDIC_UF_2010_2024.xlsx`).
+Os dados são provenientes dos **Indicadores de Fluxo da Educação Superior do INEP**, na base por Unidade da Federação `INDIC_UF_2010_2024.xlsx`.
 
-Foram utilizadas as informações dos indicadores:
+Foram utilizadas quatro dimensões:
 
-- `TX_EVASAO`;
-- `TX_CONCLUSAO`;
-- `TX_RETENCAO`;
-- `TX_PERMANENCIA`.
+- taxa de evasão;
+- taxa de conclusão;
+- taxa de retenção;
+- taxa de permanência.
 
-A unidade observacional da base analítica é:
+A unidade de análise é:
 
 > **UF × período de fluxo**.
 
-A base final contém **27 UFs** e, após a construção das variáveis defasadas e exclusão das primeiras observações sem histórico anterior, **189 observações**, correspondentes a 7 períodos de fluxo.
+O trabalho não estima o risco individual de evasão de estudantes. O alvo é a **taxa agregada de evasão** de uma UF em determinado período.
+
+Após a construção das variáveis defasadas, a base de modelagem contém **189 observações**, correspondentes a **27 UFs em 7 períodos-alvo**, de 2017–2018 a 2023–2024.
+
+A primeira observação de cada UF é retirada apenas porque não existe período anterior para a construção das variáveis defasadas.
 
 ---
 
-## 4. Estrutura do projeto
+## 4. Estrutura experimental
+
+O experimento combina:
+
+- **2 cenários de variáveis**;
+- **2 protocolos de validação temporal**;
+- **5 abordagens preditivas**;
+- **3 períodos de teste**;
+- **27 UFs por conjunto de teste**.
+
+Isso resulta em **20 condições experimentais** e **60 avaliações modelo-fold**.
+
+### Cenário A — indicadores agregados
+
+Quatro preditores, todos referentes ao período anterior:
+
+- taxa de evasão;
+- taxa de conclusão;
+- taxa de retenção;
+- taxa de permanência.
+
+### Cenário B — indicadores agregados + informação desagregada
+
+Mantém as quatro variáveis do Cenário A e acrescenta **13 taxas de evasão desagregadas**, organizadas por:
+
+- sexo;
+- pertencimento a PPI (pretos, pardos e indígenas);
+- faixa etária;
+- deficiência.
+
+O Cenário B possui **17 variáveis preditoras**.
+
+As informações adicionais representam **taxas de evasão dos grupos**, e não a composição demográfica da população estudantil.
+
+---
+
+## 5. Validação temporal
+
+Os dois protocolos mantêm os mesmos períodos de teste:
+
+```text
+2021–2022
+2022–2023
+2023–2024
+```
+
+### Expanding Window
+
+O treinamento incorpora todo o histórico disponível antes de cada período de teste.
+
+### Rolling Window
+
+O treinamento utiliza uma janela fixa de quatro períodos anteriores ao teste.
+
+Em ambos os casos, os dados respeitam a ordem temporal. Cada previsão utiliza informações do período anterior (`t-1`) e nenhum período futuro é incorporado ao treinamento.
+
+A padronização utilizada na Regressão Ridge também é ajustada exclusivamente com os dados de treinamento de cada fold.
+
+---
+
+## 6. Modelos avaliados
+
+O benchmark é composto por cinco abordagens:
+
+1. **Persistência** — baseline em que a previsão do próximo período é a taxa de evasão observada no período anterior;
+2. **Regressão Linear**;
+3. **Regressão Ridge**;
+4. **Random Forest**;
+5. **Gradient Boosting**.
+
+Os modelos supervisionados são treinados novamente em cada fold temporal.
+
+---
+
+## 7. Métricas e análises
+
+O desempenho é avaliado por:
+
+- **MAE** — erro absoluto médio;
+- **RMSE** — raiz do erro quadrático médio;
+- **R²** — coeficiente de determinação.
+
+Também foram realizadas:
+
+- análise por fold temporal;
+- análise de erros por UF;
+- análise da direção dos erros;
+- análise do comportamento dos erros segundo a magnitude da evasão observada;
+- comparação A × B em nível agregado e por período;
+- análise de importância das variáveis do Gradient Boosting.
+
+A análise de importância é interpretada como **relevância preditiva**, sem inferências causais.
+
+---
+
+## 8. Principais resultados
+
+### Cenário A
+
+Os resultados agregados foram:
+
+| Modelo            | Protocolo |    MAE |   RMSE |     R² |
+| ----------------- | --------- | -----: | -----: | ------: |
+| Persistência     | Expanding | 1,9840 | 2,5240 | -0,2399 |
+| Persistência     | Rolling   | 1,9840 | 2,5240 | -0,2399 |
+| Regressão Linear | Expanding | 1,5891 | 2,1761 |  0,0783 |
+| Regressão Linear | Rolling   | 1,5988 | 2,1127 |  0,1312 |
+| Ridge             | Expanding | 1,5823 | 2,1419 |  0,1071 |
+| Ridge             | Rolling   | 1,6214 | 2,1102 |  0,1333 |
+| Random Forest     | Expanding | 1,7317 | 2,2991 | -0,0288 |
+| Random Forest     | Rolling   | 1,7138 | 2,2549 |  0,0104 |
+| Gradient Boosting | Expanding | 1,8782 | 2,4053 | -0,1261 |
+| Gradient Boosting | Rolling   | 1,8422 | 2,3523 | -0,0770 |
+
+No conjunto avaliado, os métodos lineares apresentaram menores erros agregados que os modelos baseados em árvores no Cenário A.
+
+### Cenário B
+
+| Modelo            | Protocolo |    MAE |   RMSE |     R² |
+| ----------------- | --------- | -----: | -----: | ------: |
+| Persistência     | Expanding | 1,9840 | 2,5240 | -0,2399 |
+| Persistência     | Rolling   | 1,9840 | 2,5240 | -0,2399 |
+| Regressão Linear | Expanding | 1,6713 | 2,1564 |  0,0949 |
+| Regressão Linear | Rolling   | 1,7276 | 2,1426 |  0,1065 |
+| Ridge             | Expanding | 1,6553 | 2,1557 |  0,0955 |
+| Ridge             | Rolling   | 1,6732 | 2,1042 |  0,1383 |
+| Random Forest     | Expanding | 1,8504 | 2,3208 | -0,0483 |
+| Random Forest     | Rolling   | 1,8628 | 2,3174 | -0,0452 |
+| Gradient Boosting | Expanding | 1,7686 | 2,3054 | -0,0345 |
+| Gradient Boosting | Rolling   | 1,7867 | 2,3035 | -0,0327 |
+
+A inclusão das variáveis desagregadas alterou o desempenho dos métodos, mas o efeito não foi uniforme.
+
+No Gradient Boosting, houve redução do erro médio nos dois protocolos. O efeito temporal mais expressivo ocorreu em **2022–2023**, enquanto em 2021–2022 ocorreu deterioração e em 2023–2024 a diferença foi pequena.
+
+### Interpretabilidade
+
+Na análise do Gradient Boosting com Expanding Window, a **taxa de evasão entre mulheres no período anterior** apresentou a maior importância média por permutação entre as variáveis desagregadas, seguida pela taxa de evasão na faixa de 20–22 anos.
+
+Essas importâncias são interpretadas como evidências de utilidade preditiva contextual e não como efeitos causais.
+
+---
+
+## 9. Hipóteses
+
+### H1 — Protocolo temporal
+
+A escolha entre Expanding Window e Rolling Window produz diferenças mensuráveis no desempenho preditivo.
+
+**Resultado:** houve diferenças observáveis, mas a magnitude e a direção dependeram do modelo e da métrica.
+
+### H2 — Ampliação informacional
+
+A inclusão de informações desagregadas modifica o desempenho preditivo em relação ao cenário baseado apenas em indicadores agregados.
+
+**Resultado:** a inclusão modificou as métricas, com efeitos distintos entre os métodos.
+
+### H3 — Heterogeneidade temporal
+
+O efeito do conjunto de variáveis não é necessariamente uniforme entre os períodos de teste.
+
+**Resultado:** houve variação relevante entre os períodos, especialmente para o Gradient Boosting.
+
+---
+
+## 10. Estrutura do projeto
 
 ```text
 tcc-evasao-ensino-superior/
@@ -67,7 +219,6 @@ tcc-evasao-ensino-superior/
 ├── data/
 │   ├── raw/
 │   │   └── INDIC_UF_2010_2024.xlsx
-│   │
 │   └── processed/
 │       ├── base_modelo_uf.csv
 │       └── base_modelo_uf_cenario_b.csv
@@ -83,16 +234,6 @@ tcc-evasao-ensino-superior/
 │
 ├── results/
 │   └── tables/
-│       ├── resultados_cenario_a.csv
-│       ├── resultados_cenario_b.csv
-│       ├── resultados_por_fold_cenario_a.csv
-│       ├── resultados_por_fold_cenario_b.csv
-│       ├── previsoes_gb_cenario_a_expanding.csv
-│       ├── previsoes_gb_cenario_b_expanding.csv
-│       ├── importancias_gb_cenario_b_expanding.csv
-│       ├── comparacao_cenarios_detalhada.csv
-│       ├── resumo_efeito_cenario_b.csv
-│       └── resumo_gb_efeito_importancias.csv
 │
 ├── src/
 │   ├── __init__.py
@@ -108,262 +249,25 @@ tcc-evasao-ensino-superior/
 
 ---
 
-## 5. Construção da base
+## 11. Documentação acadêmica
 
-### Cenário A
+Os documentos produzidos durante o desenvolvimento do TCC incluem:
 
-O primeiro conjunto experimental utiliza quatro variáveis preditoras, todas defasadas em um período:
+- `tcc_final.md` — manuscrito consolidado;
+- `tcc_final_senac_pe.docx` — versão editável formatada;
+- `tcc_final_senac_pe.pdf` — versão diagramada em PDF;
+- `revisao_banca_tcc.md` — revisão crítica do manuscrito;
+- `perguntas_banca_tcc.md` — preparação para apresentação e banca.
 
-```text
-evasao_t_1
-conclusao_t_1
-retencao_t_1
-permanencia_t_1
-```
-
-O alvo é:
-
-```text
-evasao_t
-```
-
-A utilização de `t-1` foi adotada para evitar que informações do próprio período de teste sejam utilizadas na previsão.
-
-### Cenário B
-
-O segundo cenário amplia o conjunto de preditores para **17 variáveis**, mantendo as quatro variáveis agregadas do Cenário A e acrescentando taxas de evasão defasadas segundo:
-
-- sexo;
-- PPI;
-- faixa etária;
-- deficiência.
-
-As 13 novas variáveis são:
-
-```text
-evasao_feminino_t_1
-evasao_masculino_t_1
-
-evasao_ppi_sim_t_1
-evasao_ppi_nao_t_1
-
-evasao_ate_19_t_1
-evasao_20_22_t_1
-evasao_23_24_t_1
-evasao_25_29_t_1
-evasao_30_39_t_1
-evasao_40_49_t_1
-evasao_50_mais_t_1
-
-evasao_deficiencia_sim_t_1
-evasao_deficiencia_nao_t_1
-```
-
-A base do Cenário B também possui **189 observações**, **27 UFs** e **23 colunas** no total.
+Os arquivos acadêmicos podem ficar fora do repositório de código caso a estratégia de versionamento do projeto prefira separar documentação institucional dos artefatos de desenvolvimento.
 
 ---
 
-## 6. Validação temporal
+## 12. Reprodutibilidade
 
-Foram definidos dois protocolos:
+O projeto foi desenvolvido em **VS Code**, utilizando ambiente virtual Python e notebooks Jupyter pela extensão do VS Code.
 
-### Expanding Window
-
-O treinamento incorpora todo o histórico disponível antes do período de teste.
-
-### Rolling Window
-
-O treinamento utiliza uma janela fixa de quatro períodos anteriores ao período de teste.
-
-Os dois protocolos utilizam exatamente os mesmos períodos de teste:
-
-```text
-2021–2022
-2022–2023
-2023–2024
-```
-
-Cada conjunto de teste possui as mesmas **27 UFs**.
-
-As validações implementadas verificam que:
-
-- nenhum período futuro é incluído no treinamento;
-- os dois protocolos utilizam os mesmos períodos de teste;
-- cada conjunto de teste contém 27 UFs;
-- as estruturas dos folds são consistentes.
-
----
-
-## 7. Modelos avaliados
-
-O benchmark atual contém cinco abordagens:
-
-1. **Persistência** — baseline em que a previsão de `t` é a taxa de evasão observada em `t-1`;
-2. **Regressão Linear**;
-3. **Regressão Ridge**;
-4. **Random Forest Regressor**;
-5. **Gradient Boosting Regressor**.
-
-Os modelos supervisionados são treinados novamente em cada fold temporal.
-
-A Ridge utiliza padronização dentro de um `Pipeline`, garantindo que o ajuste do scaler ocorra apenas com os dados de treinamento de cada fold.
-
----
-
-## 8. Métricas
-
-São utilizadas três métricas:
-
-- **MAE** — erro absoluto médio;
-- **RMSE** — raiz do erro quadrático médio;
-- **R²** — coeficiente de determinação.
-
-Além das métricas agregadas, são analisados:
-
-- resultados por fold;
-- erros absolutos por UF e período;
-- direção dos erros (`real - previsão`);
-- comportamento dos erros por faixa da taxa observada de evasão;
-- efeito da inclusão das novas features do Cenário B.
-
----
-
-## 9. Resultados já obtidos — Cenário A
-
-Resultados agregados atuais:
-
-| Modelo | Protocolo | MAE | RMSE | R² |
-|---|---|---:|---:|---:|
-| Persistência | Expanding | 1.9840 | 2.5240 | -0.2399 |
-| Persistência | Rolling | 1.9840 | 2.5240 | -0.2399 |
-| Regressão Linear | Expanding | 1.5891 | 2.1761 | 0.0783 |
-| Regressão Linear | Rolling | 1.5988 | 2.1127 | 0.1312 |
-| Ridge | Expanding | 1.5823 | 2.1419 | 0.1071 |
-| Ridge | Rolling | 1.6214 | 2.1102 | 0.1333 |
-| Random Forest | Expanding | 1.7317 | 2.2991 | -0.0288 |
-| Random Forest | Rolling | 1.7138 | 2.2549 | 0.0104 |
-| Gradient Boosting | Expanding | 1.8782 | 2.4053 | -0.1261 |
-| Gradient Boosting | Rolling | 1.8422 | 2.3523 | -0.0770 |
-
-O baseline de persistência apresentou MAE de aproximadamente **1.984**.
-
-As abordagens lineares apresentaram os menores erros agregados no Cenário A, enquanto os modelos baseados em árvores não apresentaram ganho equivalente sobre as abordagens lineares.
-
----
-
-## 10. Comportamento dos erros
-
-Na análise do Expanding Window, foram observadas evidências de que o erro absoluto tende a aumentar quando a taxa observada de evasão é maior.
-
-Para a Ridge, a correlação entre a taxa de evasão observada e o erro absoluto foi aproximadamente:
-
-```text
-0.4658
-```
-
-As correlações correspondentes observadas foram:
-
-```text
-Persistência       0.3336
-Ridge              0.4658
-Random Forest      0.5319
-Gradient Boosting  0.5195
-```
-
-A análise por tercis da taxa de evasão indicou aumento do erro absoluto nas observações do tercil superior para todos os métodos.
-
-Também foi observado um padrão de direção do erro: as previsões tendem a se aproximar de uma faixa intermediária, com maior ocorrência de erros negativos em níveis mais baixos de evasão e de erros positivos em níveis mais altos. Esse comportamento é tratado como padrão preditivo observado, e não como efeito causal.
-
----
-
-## 11. Comparação Cenário A × Cenário B
-
-O Cenário B adicionou 13 variáveis desagregadas às quatro variáveis agregadas do Cenário A.
-
-O efeito dessa inclusão não foi uniforme entre os modelos.
-
-### Principais resultados observados
-
-- **Persistência:** não muda, pois não utiliza as novas variáveis.
-- **Regressão Linear:** efeito misto; não houve melhoria consistente nos dois protocolos.
-- **Ridge:** efeito misto; pequenas melhorias em algumas métricas/protocolos e pioras em outras.
-- **Random Forest:** piora consistente do MAE nos dois protocolos.
-- **Gradient Boosting:** redução do MAE médio nos dois protocolos, além de redução de RMSE e aumento de R².
-
-No Gradient Boosting, o efeito temporal mostrou que o principal ganho ocorreu em **2022–2023**. No Expanding Window:
-
-```text
-2021–2022 → ΔMAE = +0.1404
-2022–2023 → ΔMAE = -0.4674
-2023–2024 → ΔMAE = -0.0020
-```
-
-No Rolling Window:
-
-```text
-2021–2022 → ΔMAE = +0.1404
-2022–2023 → ΔMAE = -0.3270 (aprox.)
-2023–2024 → ΔMAE = +0.02 (aprox.)
-```
-
-Portanto, a melhoria agregada observada para o Gradient Boosting não deve ser interpretada como uma melhoria uniforme em todos os períodos.
-
----
-
-## 12. Interpretabilidade do Cenário B
-
-A análise de interpretabilidade foi realizada no **Gradient Boosting** utilizando o protocolo Expanding Window.
-
-Foram utilizadas duas abordagens:
-
-1. importância interna do modelo;
-2. **Permutation Importance** calculada nos conjuntos de teste dos folds.
-
-Entre as variáveis com maior importância média por permutação destacaram-se:
-
-```text
-1. evasao_feminino_t_1
-2. evasao_20_22_t_1
-3. evasao_ate_19_t_1
-4. evasao_ppi_nao_t_1
-5. permanencia_t_1
-```
-
-A variável `evasao_feminino_t_1` apresentou o comportamento mais consistente entre os folds:
-
-```text
-2021–2022 → 0.1152
-2022–2023 → 0.1443
-2023–2024 → 0.1708
-```
-
-e foi positiva nos três folds.
-
-Já `evasao_20_22_t_1` apresentou importância média elevada, mas maior variação temporal:
-
-```text
-2021–2022 → 0.1841
-2022–2023 → 0.1380
-2023–2024 → -0.0003
-```
-
-A interpretação dessas importâncias é **preditiva e exploratória**, não causal. A análise deve ser interpretada com cautela devido ao pequeno tamanho dos conjuntos de teste (27 UFs por período) e à possibilidade de correlação entre variáveis desagregadas.
-
----
-
-## 13. Próxima etapa do projeto
-
-A próxima etapa prevista é concluir a análise do efeito do Cenário B sobre o **Gradient Boosting em nível de UF**, verificando se o ganho observado em 2022–2023 foi distribuído entre várias unidades federativas ou concentrado em poucos casos.
-
-Depois disso, o projeto deverá avançar para a consolidação dos resultados, discussão das ameaças à validade e preparação da documentação final do TCC.
-
----
-
-## 14. Reprodutibilidade
-
-O projeto foi estruturado para execução em **VS Code**, utilizando ambiente virtual Python e notebooks Jupyter/Colab por meio da extensão do VS Code.
-
-As funções reutilizáveis foram separadas em módulos Python dentro de `src/` para evitar duplicação de código e facilitar a reprodução dos experimentos.
+As funções reutilizáveis foram organizadas em módulos Python dentro de `src/`, reduzindo duplicação e facilitando a reprodução dos experimentos.
 
 Os notebooks possuem responsabilidades separadas:
 
@@ -372,33 +276,7 @@ Os notebooks possuem responsabilidades separadas:
 - `02_protocolo_validacao.ipynb` — definição e validação dos folds temporais;
 - `03_comparacao_modelos.ipynb` — experimento do Cenário A;
 - `04_comparacao_cenario_b.ipynb` — experimento do Cenário B;
-- `05_comparacao_cenarios.ipynb` — comparação A × B;
+- `05_comparacao_cenarios.ipynb` — comparação entre cenários;
 - `06_interpretabilidade_cenario_b.ipynb` — análise de importância das variáveis.
 
-Resultados intermediários e tabelas são exportados para `results/tables/`.
-
----
-
-## 15. Estado atual
-
-**Status:** experimento principal em desenvolvimento.
-
-Já concluído:
-
-- construção e validação da base por UF;
-- construção das variáveis temporais e `t-1`;
-- definição dos protocolos Expanding e Rolling;
-- baseline de persistência;
-- comparação dos cinco modelos;
-- construção e avaliação do Cenário B;
-- comparação A × B;
-- análise inicial de erros;
-- análise inicial de interpretabilidade do Gradient Boosting;
-- organização do projeto em notebooks e módulos Python;
-- versionamento do projeto em repositório GitHub.
-
-Em andamento:
-
-- análise do efeito do Cenário B por UF;
-- consolidação dos resultados e discussão metodológica;
-- preparação da apresentação e documentação final.
+Os resultados intermediários e tabelas experimentais são exportados para `results/tables/`.
